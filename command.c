@@ -216,30 +216,26 @@ static int redis_arg3(struct cmd *r) {
 static int redis_argn(struct cmd *r) {
     switch (r->type) {
     case CMD_REQ_REDIS_BITCOUNT:
-
-    case CMD_REQ_REDIS_SET:
     case CMD_REQ_REDIS_HDEL:
     case CMD_REQ_REDIS_HMGET:
     case CMD_REQ_REDIS_HMSET:
     case CMD_REQ_REDIS_HSCAN:
     case CMD_REQ_REDIS_HSET:
-
     case CMD_REQ_REDIS_LPUSH:
+    case CMD_REQ_REDIS_PFADD:
+    case CMD_REQ_REDIS_PFMERGE:
     case CMD_REQ_REDIS_RPUSH:
-
     case CMD_REQ_REDIS_SADD:
     case CMD_REQ_REDIS_SDIFF:
     case CMD_REQ_REDIS_SDIFFSTORE:
+    case CMD_REQ_REDIS_SET:
     case CMD_REQ_REDIS_SINTER:
     case CMD_REQ_REDIS_SINTERSTORE:
+    case CMD_REQ_REDIS_SRANDMEMBER:
     case CMD_REQ_REDIS_SREM:
+    case CMD_REQ_REDIS_SSCAN:
     case CMD_REQ_REDIS_SUNION:
     case CMD_REQ_REDIS_SUNIONSTORE:
-    case CMD_REQ_REDIS_SRANDMEMBER:
-    case CMD_REQ_REDIS_SSCAN:
-
-    case CMD_REQ_REDIS_PFADD:
-    case CMD_REQ_REDIS_PFMERGE:
     case CMD_REQ_REDIS_XACK:
     case CMD_REQ_REDIS_XADD:
     case CMD_REQ_REDIS_XAUTOCLAIM:
@@ -252,13 +248,13 @@ static int redis_argn(struct cmd *r) {
     case CMD_REQ_REDIS_ZADD:
     case CMD_REQ_REDIS_ZINTERSTORE:
     case CMD_REQ_REDIS_ZRANGE:
+    case CMD_REQ_REDIS_ZRANGEBYLEX:
     case CMD_REQ_REDIS_ZRANGEBYSCORE:
     case CMD_REQ_REDIS_ZREM:
     case CMD_REQ_REDIS_ZREVRANGE:
-    case CMD_REQ_REDIS_ZRANGEBYLEX:
     case CMD_REQ_REDIS_ZREVRANGEBYSCORE:
-    case CMD_REQ_REDIS_ZUNIONSTORE:
     case CMD_REQ_REDIS_ZSCAN:
+    case CMD_REQ_REDIS_ZUNIONSTORE:
         return 1;
 
     default:
