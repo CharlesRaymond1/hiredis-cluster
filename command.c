@@ -243,6 +243,7 @@ static int redis_argsub(struct cmd *r) {
  * have a special format with exactly 2 arguments, followed by one or more keys,
  * followed by zero or more arguments (the documentation online seems to suggest
  * that at least one argument is required, but that shouldn't be the case).
+ * Format: command arg numkeys [ key ... ] [ arg ... ]
  */
 static int redis_argeval(struct cmd *r) {
     switch (r->type) {
@@ -671,12 +672,7 @@ void redis_parse_cmd(struct cmd *r) {
         case SW_KEY_LF:
             switch (ch) {
             case LF:
-                if (redis_argn(r)) {
-                    if (rnarg == 0) {
-                        goto done;
-                    }
-                    state = SW_ARG1_LEN;
-                } else if (redis_argx(r)) {
+                if (redis_argx(r)) {
                     if (rnarg == 0) {
                         goto done;
                     }
@@ -689,6 +685,11 @@ void redis_parse_cmd(struct cmd *r) {
                         goto error;
                     }
                     state = SW_ARG1_LEN;
+                } else if (redis_argn(r)) {
+                    if (rnarg == 0) {
+                        goto done;
+                    }
+                    state = SW_ARGN_LEN;
                 } else if (redis_argeval(r) || redis_argsub(r)) {
                     if (rnarg == 0) {
                         goto done;
@@ -721,26 +722,6 @@ void redis_parse_cmd(struct cmd *r) {
                 }
                 rnarg--;
                 token = NULL;
-
-                /*
-                //for mset value length
-                if(redis_argkvx(r))
-                {
-                    struct keypos *kpos;
-                    uint32_t array_len = array_n(r->keys);
-                    if(array_len == 0)
-                    {
-                        goto error;
-                    }
-
-                    kpos = array_n(r->keys, array_len-1);
-                    if (kpos == NULL || kpos->v_len != 0) {
-                        goto error;
-                    }
-
-                    kpos->v_len = rlen;
-                }
-                */
                 state = SW_ARG1_LEN_LF;
             } else {
                 goto error;
@@ -784,12 +765,7 @@ void redis_parse_cmd(struct cmd *r) {
             // rnarg is the number of arguments after the first argument
             switch (ch) {
             case LF:
-                if (redis_argn(r)) {
-                    if (rnarg == 0) {
-                        goto done;
-                    }
-                    state = SW_ARGN_LEN;
-                } else if (redis_argeval(r)) {
+                if (redis_argeval(r)) {
                     // EVAL command layout:
                     // eval <script> <no of keys> <keys..> <args..>
                     //              ^
@@ -871,10 +847,6 @@ void redis_parse_cmd(struct cmd *r) {
 
             m = p + rlen;
             if (m >= cmd_end) {
-                // rlen -= (uint32_t)(b->last - p);
-                // m = b->last - 1;
-                // p = m;
-                // break;
                 goto error;
             }
 
@@ -921,12 +893,7 @@ void redis_parse_cmd(struct cmd *r) {
         case SW_ARG2_LF:
             switch (ch) {
             case LF:
-                if (redis_argn(r)) {
-                    if (rnarg == 0) {
-                        goto done;
-                    }
-                    state = SW_ARGN_LEN;
-                } else if (redis_argeval(r)) {
+                if (redis_argeval(r)) {
                     if (rnarg < 1) {
                         goto error;
                     }
@@ -1000,15 +967,10 @@ void redis_parse_cmd(struct cmd *r) {
         case SW_ARGN_LF:
             switch (ch) {
             case LF:
-                if (redis_argn(r) || redis_argeval(r) || redis_argsub(r)) {
-                    if (rnarg == 0) {
-                        goto done;
-                    }
-                    state = SW_ARGN_LEN;
-                } else {
-                    goto error;
+                if (rnarg == 0) {
+                    goto done;
                 }
-
+                state = SW_ARGN_LEN;
                 break;
 
             default:

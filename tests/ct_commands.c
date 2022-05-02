@@ -436,6 +436,14 @@ void test_lset(redisClusterContext *cc) {
     freeReplyObject(r);
 }
 
+void test_ping(redisClusterContext *cc) {
+    redisReply *r;
+
+    r = redisClusterCommand(cc, "PING");
+    assert(r == NULL);
+    assert(strncmp(cc->errstr, "No keys in command", 18) == 0);
+}
+
 int main() {
     struct timeval timeout = {0, 500000};
 
@@ -456,6 +464,7 @@ int main() {
 
     test_linsert(cc);
     test_lset(cc);
+    test_ping(cc);
     test_xack(cc);
     test_xadd(cc);
     test_xautoclaim(cc);
