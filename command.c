@@ -109,57 +109,23 @@ static int redis_arg0(struct cmd *r) {
 }
 
 /*
- * Return true, if the redis command accepts exactly 1 argument, otherwise
- * return false
- * Format: command key arg
- */
-static int redis_arg1(struct cmd *r) {
-    switch (r->type) {
-    case CMD_REQ_REDIS_EXPIRE:
-    case CMD_REQ_REDIS_EXPIREAT:
-    case CMD_REQ_REDIS_PEXPIRE:
-    case CMD_REQ_REDIS_PEXPIREAT:
-
-    case CMD_REQ_REDIS_APPEND:
-    case CMD_REQ_REDIS_DECRBY:
-    case CMD_REQ_REDIS_GETBIT:
-    case CMD_REQ_REDIS_GETSET:
-    case CMD_REQ_REDIS_INCRBY:
-    case CMD_REQ_REDIS_INCRBYFLOAT:
-    case CMD_REQ_REDIS_SETNX:
-
-    case CMD_REQ_REDIS_HEXISTS:
-    case CMD_REQ_REDIS_HGET:
-
-    case CMD_REQ_REDIS_LINDEX:
-    case CMD_REQ_REDIS_LPUSHX:
-    case CMD_REQ_REDIS_RPOPLPUSH:
-    case CMD_REQ_REDIS_RPUSHX:
-
-    case CMD_REQ_REDIS_SISMEMBER:
-
-    case CMD_REQ_REDIS_ZRANK:
-    case CMD_REQ_REDIS_ZREVRANK:
-    case CMD_REQ_REDIS_ZSCORE:
-        return 1;
-
-    default:
-        break;
-    }
-
-    return 0;
-}
-
-/*
  * Return true, if the redis command accepts 0 or more arguments, otherwise
  * return false
  * Format: command key [ arg ... ]
  */
 static int redis_argn(struct cmd *r) {
     switch (r->type) {
+    case CMD_REQ_REDIS_APPEND:
     case CMD_REQ_REDIS_BITCOUNT:
+    case CMD_REQ_REDIS_DECRBY:
+    case CMD_REQ_REDIS_EXPIRE:
+    case CMD_REQ_REDIS_EXPIREAT:
+    case CMD_REQ_REDIS_GETBIT:
+    case CMD_REQ_REDIS_GETSET:
     case CMD_REQ_REDIS_GETRANGE:
     case CMD_REQ_REDIS_HDEL:
+    case CMD_REQ_REDIS_HEXISTS:
+    case CMD_REQ_REDIS_HGET:
     case CMD_REQ_REDIS_HINCRBY:
     case CMD_REQ_REDIS_HINCRBYFLOAT:
     case CMD_REQ_REDIS_HMGET:
@@ -167,26 +133,36 @@ static int redis_argn(struct cmd *r) {
     case CMD_REQ_REDIS_HSCAN:
     case CMD_REQ_REDIS_HSET:
     case CMD_REQ_REDIS_HSETNX:
+    case CMD_REQ_REDIS_INCRBY:
+    case CMD_REQ_REDIS_INCRBYFLOAT:
+    case CMD_REQ_REDIS_LINDEX:
     case CMD_REQ_REDIS_LINSERT:
     case CMD_REQ_REDIS_LPUSH:
+    case CMD_REQ_REDIS_LPUSHX:
     case CMD_REQ_REDIS_LRANGE:
     case CMD_REQ_REDIS_LREM:
     case CMD_REQ_REDIS_LSET:
     case CMD_REQ_REDIS_LTRIM:
+    case CMD_REQ_REDIS_PEXPIRE:
+    case CMD_REQ_REDIS_PEXPIREAT:
     case CMD_REQ_REDIS_PFADD:
     case CMD_REQ_REDIS_PFMERGE:
     case CMD_REQ_REDIS_PSETEX:
     case CMD_REQ_REDIS_RESTORE:
+    case CMD_REQ_REDIS_RPOPLPUSH:
     case CMD_REQ_REDIS_RPUSH:
+    case CMD_REQ_REDIS_RPUSHX:
     case CMD_REQ_REDIS_SADD:
     case CMD_REQ_REDIS_SDIFF:
     case CMD_REQ_REDIS_SDIFFSTORE:
     case CMD_REQ_REDIS_SET:
     case CMD_REQ_REDIS_SETBIT:
     case CMD_REQ_REDIS_SETEX:
+    case CMD_REQ_REDIS_SETNX:
     case CMD_REQ_REDIS_SETRANGE:
     case CMD_REQ_REDIS_SINTER:
     case CMD_REQ_REDIS_SINTERSTORE:
+    case CMD_REQ_REDIS_SISMEMBER:
     case CMD_REQ_REDIS_SMOVE:
     case CMD_REQ_REDIS_SRANDMEMBER:
     case CMD_REQ_REDIS_SREM:
@@ -210,13 +186,16 @@ static int redis_argn(struct cmd *r) {
     case CMD_REQ_REDIS_ZRANGE:
     case CMD_REQ_REDIS_ZRANGEBYLEX:
     case CMD_REQ_REDIS_ZRANGEBYSCORE:
+    case CMD_REQ_REDIS_ZRANK:
     case CMD_REQ_REDIS_ZREM:
     case CMD_REQ_REDIS_ZREMRANGEBYLEX:
     case CMD_REQ_REDIS_ZREMRANGEBYRANK:
     case CMD_REQ_REDIS_ZREMRANGEBYSCORE:
     case CMD_REQ_REDIS_ZREVRANGE:
     case CMD_REQ_REDIS_ZREVRANGEBYSCORE:
+    case CMD_REQ_REDIS_ZREVRANK:
     case CMD_REQ_REDIS_ZSCAN:
+    case CMD_REQ_REDIS_ZSCORE:
     case CMD_REQ_REDIS_ZUNIONSTORE:
         return 1;
 
@@ -718,11 +697,6 @@ void redis_parse_cmd(struct cmd *r) {
                         goto error;
                     }
                     goto done;
-                } else if (redis_arg1(r)) {
-                    if (rnarg != 1) {
-                        goto error;
-                    }
-                    state = SW_ARG1_LEN;
                 } else if (redis_argn(r)) {
                     if (rnarg == 0) {
                         goto done;
@@ -836,12 +810,7 @@ void redis_parse_cmd(struct cmd *r) {
             // rnarg is the number of arguments after the first argument
             switch (ch) {
             case LF:
-                if (redis_arg1(r)) {
-                    if (rnarg != 0) {
-                        goto error;
-                    }
-                    goto done;
-                } else if (redis_argn(r)) {
+                if (redis_argn(r)) {
                     if (rnarg == 0) {
                         goto done;
                     }
