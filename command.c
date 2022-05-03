@@ -192,23 +192,6 @@ static int redis_arg2(struct cmd *r) {
 }
 
 /*
- * Return true, if the redis command accepts exactly 3 arguments, otherwise
- * return false
- * Format: command key arg1 arg2 arg3
- */
-static int redis_arg3(struct cmd *r) {
-    switch (r->type) {
-    case CMD_REQ_REDIS_LINSERT:
-        return 1;
-
-    default:
-        break;
-    }
-
-    return 0;
-}
-
-/*
  * Return true, if the redis command accepts 0 or more arguments, otherwise
  * return false
  * Format: command key [ arg ... ]
@@ -221,6 +204,7 @@ static int redis_argn(struct cmd *r) {
     case CMD_REQ_REDIS_HMSET:
     case CMD_REQ_REDIS_HSCAN:
     case CMD_REQ_REDIS_HSET:
+    case CMD_REQ_REDIS_LINSERT:
     case CMD_REQ_REDIS_LPUSH:
     case CMD_REQ_REDIS_PFADD:
     case CMD_REQ_REDIS_PFMERGE:
@@ -546,10 +530,6 @@ void redis_parse_cmd(struct cmd *r) {
         SW_ARG2_LEN_LF,
         SW_ARG2,
         SW_ARG2_LF,
-        SW_ARG3_LEN,
-        SW_ARG3_LEN_LF,
-        SW_ARG3,
-        SW_ARG3_LF,
         SW_ARGN_LEN,
         SW_ARGN_LEN_LF,
         SW_ARGN,
@@ -769,11 +749,6 @@ void redis_parse_cmd(struct cmd *r) {
                         goto error;
                     }
                     state = SW_ARG1_LEN;
-                } else if (redis_arg3(r)) {
-                    if (rnarg != 3) {
-                        goto error;
-                    }
-                    state = SW_ARG1_LEN;
                 } else if (redis_argn(r)) {
                     if (rnarg == 0) {
                         goto done;
@@ -894,11 +869,6 @@ void redis_parse_cmd(struct cmd *r) {
                     goto done;
                 } else if (redis_arg2(r)) {
                     if (rnarg != 1) {
-                        goto error;
-                    }
-                    state = SW_ARG2_LEN;
-                } else if (redis_arg3(r)) {
-                    if (rnarg != 2) {
                         goto error;
                     }
                     state = SW_ARG2_LEN;
@@ -1044,11 +1014,6 @@ void redis_parse_cmd(struct cmd *r) {
                         goto error;
                     }
                     goto done;
-                } else if (redis_arg3(r)) {
-                    if (rnarg != 1) {
-                        goto error;
-                    }
-                    state = SW_ARG3_LEN;
                 } else if (redis_argn(r)) {
                     if (rnarg == 0) {
                         goto done;
@@ -1059,85 +1024,6 @@ void redis_parse_cmd(struct cmd *r) {
                         goto error;
                     }
                     state = SW_KEY_LEN;
-                } else {
-                    goto error;
-                }
-
-                break;
-
-            default:
-                goto error;
-            }
-
-            break;
-
-        case SW_ARG3_LEN:
-            if (token == NULL) {
-                if (ch != '$') {
-                    goto error;
-                }
-                rlen = 0;
-                token = p;
-            } else if (isdigit(ch)) {
-                rlen = rlen * 10 + (uint32_t)(ch - '0');
-            } else if (ch == CR) {
-                if ((p - token) <= 1 || rnarg == 0) {
-                    goto error;
-                }
-                rnarg--;
-                token = NULL;
-                state = SW_ARG3_LEN_LF;
-            } else {
-                goto error;
-            }
-
-            break;
-
-        case SW_ARG3_LEN_LF:
-            switch (ch) {
-            case LF:
-                state = SW_ARG3;
-                break;
-
-            default:
-                goto error;
-            }
-
-            break;
-
-        case SW_ARG3:
-            m = p + rlen;
-            if (m >= cmd_end) {
-                // rlen -= (uint32_t)(b->last - p);
-                // m = b->last - 1;
-                // p = m;
-                // break;
-                goto error;
-            }
-
-            if (*m != CR) {
-                goto error;
-            }
-
-            p = m; /* move forward by rlen bytes */
-            rlen = 0;
-            state = SW_ARG3_LF;
-
-            break;
-
-        case SW_ARG3_LF:
-            switch (ch) {
-            case LF:
-                if (redis_arg3(r)) {
-                    if (rnarg != 0) {
-                        goto error;
-                    }
-                    goto done;
-                } else if (redis_argn(r)) {
-                    if (rnarg == 0) {
-                        goto done;
-                    }
-                    state = SW_ARGN_LEN;
                 } else {
                     goto error;
                 }
