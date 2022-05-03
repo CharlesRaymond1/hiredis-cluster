@@ -419,6 +419,23 @@ void test_linsert(redisClusterContext *cc) {
     freeReplyObject(r);
 }
 
+void test_lset(redisClusterContext *cc) {
+    redisReply *r;
+
+    /* Prepare */
+    r = redisClusterCommand(cc, "DEL mylist");
+    CHECK_REPLY_TYPE(r, REDIS_REPLY_INTEGER);
+    freeReplyObject(r);
+
+    r = redisClusterCommand(cc, "RPUSH mylist one two three");
+    CHECK_REPLY_TYPE(r, REDIS_REPLY_INTEGER);
+    freeReplyObject(r);
+
+    r = redisClusterCommand(cc, "LSET mylist 0 four");
+    CHECK_REPLY_TYPE(r, REDIS_REPLY_STATUS);
+    freeReplyObject(r);
+}
+
 int main() {
     struct timeval timeout = {0, 500000};
 
@@ -438,6 +455,7 @@ int main() {
     test_eval(cc);
 
     test_linsert(cc);
+    test_lset(cc);
     test_xack(cc);
     test_xadd(cc);
     test_xautoclaim(cc);
