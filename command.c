@@ -64,51 +64,6 @@ static int redis_argz(struct cmd *r) {
 }
 
 /*
- * Return true, if the redis command accepts no arguments, otherwise
- * return false
- * Format: command key
- */
-static int redis_arg0(struct cmd *r) {
-    switch (r->type) {
-    case CMD_REQ_REDIS_PERSIST:
-    case CMD_REQ_REDIS_PTTL:
-    case CMD_REQ_REDIS_SORT:
-    case CMD_REQ_REDIS_TTL:
-    case CMD_REQ_REDIS_TYPE:
-    case CMD_REQ_REDIS_DUMP:
-
-    case CMD_REQ_REDIS_DECR:
-    case CMD_REQ_REDIS_GET:
-    case CMD_REQ_REDIS_INCR:
-    case CMD_REQ_REDIS_STRLEN:
-
-    case CMD_REQ_REDIS_HGETALL:
-    case CMD_REQ_REDIS_HKEYS:
-    case CMD_REQ_REDIS_HLEN:
-    case CMD_REQ_REDIS_HVALS:
-
-    case CMD_REQ_REDIS_LLEN:
-    case CMD_REQ_REDIS_LPOP:
-    case CMD_REQ_REDIS_RPOP:
-
-    case CMD_REQ_REDIS_SCARD:
-    case CMD_REQ_REDIS_SMEMBERS:
-    case CMD_REQ_REDIS_SPOP:
-
-    case CMD_REQ_REDIS_XLEN:
-    case CMD_REQ_REDIS_ZCARD:
-    case CMD_REQ_REDIS_PFCOUNT:
-    case CMD_REQ_REDIS_AUTH:
-        return 1;
-
-    default:
-        break;
-    }
-
-    return 0;
-}
-
-/*
  * Return true, if the redis command accepts 0 or more arguments, otherwise
  * return false
  * Format: command key [ arg ... ]
@@ -116,43 +71,59 @@ static int redis_arg0(struct cmd *r) {
 static int redis_argn(struct cmd *r) {
     switch (r->type) {
     case CMD_REQ_REDIS_APPEND:
+    case CMD_REQ_REDIS_AUTH:
     case CMD_REQ_REDIS_BITCOUNT:
+    case CMD_REQ_REDIS_DECR:
     case CMD_REQ_REDIS_DECRBY:
+    case CMD_REQ_REDIS_DUMP:
     case CMD_REQ_REDIS_EXPIRE:
     case CMD_REQ_REDIS_EXPIREAT:
+    case CMD_REQ_REDIS_GET:
     case CMD_REQ_REDIS_GETBIT:
     case CMD_REQ_REDIS_GETSET:
     case CMD_REQ_REDIS_GETRANGE:
     case CMD_REQ_REDIS_HDEL:
     case CMD_REQ_REDIS_HEXISTS:
     case CMD_REQ_REDIS_HGET:
+    case CMD_REQ_REDIS_HGETALL:
     case CMD_REQ_REDIS_HINCRBY:
     case CMD_REQ_REDIS_HINCRBYFLOAT:
+    case CMD_REQ_REDIS_HKEYS:
+    case CMD_REQ_REDIS_HLEN:
     case CMD_REQ_REDIS_HMGET:
     case CMD_REQ_REDIS_HMSET:
     case CMD_REQ_REDIS_HSCAN:
     case CMD_REQ_REDIS_HSET:
     case CMD_REQ_REDIS_HSETNX:
+    case CMD_REQ_REDIS_HVALS:
+    case CMD_REQ_REDIS_INCR:
     case CMD_REQ_REDIS_INCRBY:
     case CMD_REQ_REDIS_INCRBYFLOAT:
     case CMD_REQ_REDIS_LINDEX:
     case CMD_REQ_REDIS_LINSERT:
+    case CMD_REQ_REDIS_LLEN:
+    case CMD_REQ_REDIS_LPOP:
     case CMD_REQ_REDIS_LPUSH:
     case CMD_REQ_REDIS_LPUSHX:
     case CMD_REQ_REDIS_LRANGE:
     case CMD_REQ_REDIS_LREM:
     case CMD_REQ_REDIS_LSET:
     case CMD_REQ_REDIS_LTRIM:
+    case CMD_REQ_REDIS_PERSIST:
     case CMD_REQ_REDIS_PEXPIRE:
     case CMD_REQ_REDIS_PEXPIREAT:
     case CMD_REQ_REDIS_PFADD:
+    case CMD_REQ_REDIS_PFCOUNT:
     case CMD_REQ_REDIS_PFMERGE:
     case CMD_REQ_REDIS_PSETEX:
+    case CMD_REQ_REDIS_PTTL:
     case CMD_REQ_REDIS_RESTORE:
+    case CMD_REQ_REDIS_RPOP:
     case CMD_REQ_REDIS_RPOPLPUSH:
     case CMD_REQ_REDIS_RPUSH:
     case CMD_REQ_REDIS_RPUSHX:
     case CMD_REQ_REDIS_SADD:
+    case CMD_REQ_REDIS_SCARD:
     case CMD_REQ_REDIS_SDIFF:
     case CMD_REQ_REDIS_SDIFFSTORE:
     case CMD_REQ_REDIS_SET:
@@ -163,22 +134,30 @@ static int redis_argn(struct cmd *r) {
     case CMD_REQ_REDIS_SINTER:
     case CMD_REQ_REDIS_SINTERSTORE:
     case CMD_REQ_REDIS_SISMEMBER:
+    case CMD_REQ_REDIS_SMEMBERS:
     case CMD_REQ_REDIS_SMOVE:
+    case CMD_REQ_REDIS_SORT:
+    case CMD_REQ_REDIS_SPOP:
     case CMD_REQ_REDIS_SRANDMEMBER:
     case CMD_REQ_REDIS_SREM:
     case CMD_REQ_REDIS_SSCAN:
+    case CMD_REQ_REDIS_STRLEN:
     case CMD_REQ_REDIS_SUNION:
     case CMD_REQ_REDIS_SUNIONSTORE:
+    case CMD_REQ_REDIS_TTL:
+    case CMD_REQ_REDIS_TYPE:
     case CMD_REQ_REDIS_XACK:
     case CMD_REQ_REDIS_XADD:
     case CMD_REQ_REDIS_XAUTOCLAIM:
     case CMD_REQ_REDIS_XCLAIM:
     case CMD_REQ_REDIS_XDEL:
+    case CMD_REQ_REDIS_XLEN:
     case CMD_REQ_REDIS_XPENDING:
     case CMD_REQ_REDIS_XRANGE:
     case CMD_REQ_REDIS_XREVRANGE:
     case CMD_REQ_REDIS_XTRIM:
     case CMD_REQ_REDIS_ZADD:
+    case CMD_REQ_REDIS_ZCARD:
     case CMD_REQ_REDIS_ZCOUNT:
     case CMD_REQ_REDIS_ZINCRBY:
     case CMD_REQ_REDIS_ZINTERSTORE:
@@ -692,12 +671,7 @@ void redis_parse_cmd(struct cmd *r) {
         case SW_KEY_LF:
             switch (ch) {
             case LF:
-                if (redis_arg0(r)) {
-                    if (rnarg != 0) {
-                        goto error;
-                    }
-                    goto done;
-                } else if (redis_argn(r)) {
+                if (redis_argn(r)) {
                     if (rnarg == 0) {
                         goto done;
                     }
